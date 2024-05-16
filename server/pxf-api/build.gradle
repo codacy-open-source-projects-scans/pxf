@@ -1,0 +1,61 @@
+apply plugin: "java-library"
+
+jar {
+    enabled = true
+}
+
+dependencies {
+
+    /*******************************
+     * Annotation Processors
+     *******************************/
+
+    annotationProcessor("org.springframework.boot:spring-boot-autoconfigure-processor")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
+    /*******************************
+     * API Dependencies
+     *******************************/
+
+    api("org.apache.hadoop:hadoop-common")                           { transitive = false }
+    api("org.springframework.boot:spring-boot-starter")
+    api('org.springframework.boot:spring-boot-starter-web')
+
+    /*******************************
+     * Compile Only Dependencies
+     *******************************/
+
+    compileOnly("org.apache.hadoop:hadoop-annotations")
+
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
+    implementation("org.springframework.boot:spring-boot-starter-log4j2")
+
+    implementation("com.google.guava:guava")
+    implementation("commons-codec:commons-codec")
+    implementation("commons-collections:commons-collections")
+    implementation("commons-configuration:commons-configuration")
+    implementation("commons-lang:commons-lang")
+    implementation("org.apache.commons:commons-lang3")
+
+    implementation("org.apache.hadoop:hadoop-auth")                  { transitive = false }
+    implementation("org.codehaus.woodstox:stax2-api")                { transitive = false }
+    implementation("com.fasterxml.woodstox:woodstox-core")           { transitive = false }
+    implementation("com.esotericsoftware:kryo")                      { transitive = false }
+
+    /*******************************
+     * Test Dependencies
+     *******************************/
+
+    testCompileOnly("org.apache.hadoop:hadoop-annotations")
+    testImplementation("com.esotericsoftware:minlog")
+    testImplementation("com.esotericsoftware:reflectasm")
+    testImplementation('org.mockito:mockito-inline')
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+}
+
+test {
+    useJUnitPlatform()
+}

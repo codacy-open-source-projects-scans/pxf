@@ -1,0 +1,344 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+plugins {
+    id "io.franzbecker.gradle-lombok" version "3.3.0"
+    id "org.springframework.boot" version "${springBootVersion}" apply false
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
+
+// override Spring Framework version to pick the Spring MVC 5.3.33 with the async race condition fix
+// https://github.com/spring-projects/spring-framework/issues/32342
+ext['spring-framework.version'] = '5.3.33'
+ext['tomcat.version'] = '9.0.87'
+
+def javaProjects = subprojects.findAll {
+    it.name.startsWith("pxf-")
+}
+
+allprojects {
+    apply plugin: "jacoco"
+    apply plugin: "idea"
+    apply plugin: "eclipse"
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+idea {
+    project {
+        jdkName = "1.8"
+        languageLevel = "8"
+        vcs = "Git"
+    }
+}
+
+configure(javaProjects) {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: "io.franzbecker.gradle-lombok"
+
+    group = 'org.greenplum.pxf'
+    version = "${version}"
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    dependencyManagement {
+        imports {
+            mavenBom("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+        }
+        dependencies {
+            dependency("com.esotericsoftware:kryo:3.0.3")
+            dependency("com.esotericsoftware:minlog:1.3.0")
+            dependency("com.esotericsoftware:reflectasm:1.11.6")
+            dependency("com.fasterxml.woodstox:woodstox-core:5.0.3")
+            dependency("com.google.code.findbugs:annotations:1.3.9")
+            dependency("com.google.guava:guava:20.0")
+            dependency("com.google.protobuf:protobuf-java:2.5.0")
+            dependency("com.google.cloud.bigdataoss:gcs-connector:hadoop2-1.9.17")
+            dependency("com.microsoft.azure:azure-storage:5.5.0")
+            dependency("com.microsoft.azure:azure-data-lake-store-sdk:2.3.9")
+            dependency("com.univocity:univocity-parsers:2.9.1")
+            dependency("com.yammer.metrics:metrics-core:2.2.0")
+            dependency("com.zaxxer:HikariCP:3.4.5")
+            dependency("commons-codec:commons-codec:1.14")
+            dependency("commons-collections:commons-collections:3.2.2")
+            dependency("commons-configuration:commons-configuration:1.10")
+            dependency("commons-io:commons-io:2.7")
+            dependency("commons-lang:commons-lang:2.6")
+            dependency("commons-logging:commons-logging:1.1.3")
+            dependency("io.airlift:aircompressor:0.8")
+            dependency("javax.jdo:jdo-api:3.0.1")
+            dependency("joda-time:joda-time:2.8.1")
+            dependency("net.sf.opencsv:opencsv:2.3")
+            dependency("org.antlr:antlr-runtime:3.5.2")
+            dependency("org.apache.commons:commons-compress:1.20")
+            dependency("org.apache.htrace:htrace-core:3.1.0-incubating")
+            dependency("org.apache.htrace:htrace-core4:4.0.1-incubating")
+
+            dependency("org.apache.zookeeper:zookeeper:3.4.6")
+            dependency("org.codehaus.woodstox:stax2-api:3.1.4")
+            dependency("org.datanucleus:datanucleus-api-jdo:4.2.4")
+            dependency("org.datanucleus:datanucleus-core:4.1.17")
+            dependency("org.jodd:jodd-core:3.5.2")
+            dependency("org.json:json:20090211")
+            dependency("org.mortbay.jetty:jetty-util:6.1.26")
+            dependency("org.objenesis:objenesis:2.1")
+
+            // revert once springboot provided postgresql is upgraded to bundle postgresql:42.7.2+
+            dependency("org.postgresql:postgresql:42.7.2")
+
+            dependency("org.simplify4u:slf4j-mock:2.3.0")
+            dependency("org.threeten:threeten-extra:1.5.0")
+            dependency("org.tukaani:xz:1.8")
+            dependency("org.wildfly.openssl:wildfly-openssl:1.0.7.Final")
+            dependency("org.xerial.snappy:snappy-java:1.1.10.4")
+
+            // Hadoop dependencies
+            dependencySet(group:"org.apache.hadoop", version:"${hadoopVersion}") {
+                entry("hadoop-annotations")
+                entry("hadoop-auth")
+                entry("hadoop-aws")
+                entry("hadoop-azure")
+                entry("hadoop-azure-datalake")
+                entry("hadoop-common")
+                entry("hadoop-hdfs")
+                entry("hadoop-hdfs-client")
+                entry("hadoop-mapreduce-client-core")
+                entry("hadoop-yarn-api")
+                entry("hadoop-yarn-client")
+            }
+
+            // HBase dependencies
+            dependencySet(group:"org.apache.hbase", version:"${hbaseVersion}") {
+                entry("hbase-annotations")
+                entry("hbase-client")
+                entry("hbase-common")
+                entry("hbase-protocol")
+            }
+
+            // Hive dependencies
+            dependency("org.apache.hive:hive-storage-api:${hiveStorageApiVersion}")
+            dependencySet(group:"org.apache.hive", version:"${hiveVersion}") {
+                entry("hive-exec")
+                entry("hive-metastore")
+                entry("hive-serde")
+                entry("hive-common")
+            }
+            // 1.2.2 breaks on CDH-5.x
+            dependencySet(group:"org.apache.hive", version:"1.1.0") {
+                entry("hive-jdbc")
+                entry("hive-service")
+            }
+            dependencySet(group:"org.apache.hive.shims", version:"${hiveVersion}") {
+                entry("hive-shims-common")
+                entry("hive-shims-0.23")
+            }
+
+            // Parquet dependencies
+            dependency("org.apache.parquet:parquet-format:2.7.0")
+            dependencySet(group:"org.apache.parquet", version:"${parquetVersion}") {
+                entry("parquet-column")
+                entry("parquet-common")
+                entry("parquet-encoding")
+                entry("parquet-generator")
+                entry("parquet-hadoop")
+                entry("parquet-jackson")
+                entry("parquet-pig")
+            }
+
+            // Thrift dependencies
+            dependencySet(group:"org.apache.thrift", version:"0.9.3") {
+                entry("libfb303")
+                entry("libthrift")
+            }
+
+            // ORC dependencies
+            dependencySet(group:"org.apache.orc", version:"${orcVersion}") {
+                entry("orc-core")
+                entry("orc-shims")
+            }
+
+            // Avro dependencies
+            dependencySet(group:"org.apache.avro", version:"1.10.2") {
+                entry("avro")
+                entry("avro-mapred")
+            }
+
+            // Jackson 1.x dependencies
+            dependencySet(group:"org.codehaus.jackson", version:"1.9.13") {
+                entry("jackson-core-asl")
+                entry("jackson-mapper-asl")
+            }
+
+            // AWS SDK dependencies
+            dependencySet(group:"com.amazonaws", version:"${awsJavaSdk}") {
+                entry("aws-java-sdk-core")
+                entry("aws-java-sdk-kms")
+                entry("aws-java-sdk-s3")
+            }
+
+            // currently imported BOM spring-boot-dependencies:2.5.12 includes log4j-bom:2.17.2 and
+            // importing a module log4j-spring-boot:2.17.2 results in its transitive Junit dependencies
+            // being put into compileClasspath so we have to exclude them here so they are not shipped with PXF
+            // this is fixed in log4j-spring-boot:2.19.0, which is used by spring-boot-dependencies:3.0.0+
+            // so when we upgrade to Spring Boot version 3.0.0+ we should remove this fix
+            // alternatively we can bump log4j-spring-boot to 2.19.0 and not use excludes
+            // dependency("org.apache.logging.log4j:log4j-spring-boot:2.19.0")
+            dependency("org.apache.logging.log4j:log4j-spring-boot:2.17.2") {
+                exclude("org.junit.vintage:junit-vintage-engine")
+                exclude("org.junit.jupiter:junit-jupiter-engine")
+                exclude("org.junit.jupiter:junit-jupiter-api")
+            }
+
+        }
+    }
+
+    task removeIdeaOutDirectory(type: Delete) {
+        file("${projectDir}/out").deleteDir()
+    }
+
+    clean {
+        dependsOn(removeIdeaOutDirectory)
+    }
+
+    compileJava {
+        options.compilerArgs += [
+                "-g", "-Xlint:varargs", "-Xlint:cast", "-Xlint:classfile", "-Xlint:dep-ann", "-Xlint:divzero",
+                "-Xlint:empty", "-Xlint:finally", "-Xlint:overrides", "-Xlint:path", "-Xlint:-processing", "-Xlint:static",
+                "-Xlint:try", "-Xlint:fallthrough", "-Xlint:deprecation", "-Xlint:unchecked", "-Xlint:-options", "-Werror"
+        ]
+    }
+
+    compileTestJava {
+        options.compilerArgs += [
+                "-g", "-Xlint:varargs", "-Xlint:cast", "-Xlint:classfile", "-Xlint:dep-ann", "-Xlint:divzero",
+                "-Xlint:empty", "-Xlint:finally", "-Xlint:overrides", "-Xlint:path", "-Xlint:-processing", "-Xlint:static",
+                "-Xlint:try", "-Xlint:fallthrough", "-Xlint:deprecation", "-Xlint:unchecked", "-Xlint:-options", "-Werror"
+        ]
+    }
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+
+        // create a full list of dependencies shipped with PXF to make sure we give proper attribution
+        licenseScanner {
+            extendsFrom runtimeClasspath
+            // runtimeClasspath includes development-only dependencies, explicitly exclude them here
+            exclude group: 'org.springframework.boot', module: 'spring-boot-devtools'
+            exclude group: 'com.fasterxml.jackson', module: 'jackson-bom'
+            // some dependencies shipped with PXF were not automatically included, include them here
+            dependencies {
+                // declare the dependency spring-boot-loader in the scope of the license scanner configuration
+                // https://docs.gradle.org/current/userguide/declaring_dependencies.html#sec:resolvable-consumable-configs
+                licenseScanner('org.springframework.boot:spring-boot-loader')
+            }
+        }
+
+        all*.exclude group: 'javax.servlet', module: 'servlet-api'
+        all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
+
+    test {
+        testLogging {
+            // log test names only when failed
+            events "failed"
+        }
+
+        // slightly modified from https://stackoverflow.com/a/36130467
+        afterSuite { desc, result ->
+            if (!desc.parent) { // print only for the entire sub project not per test suite
+                def suiteSummary = "${project.name} Test Results: ${result.resultType} " +
+                        "(${result.testCount} tests, " +
+                        "${result.successfulTestCount} passed, " +
+                        "${result.failedTestCount} failed, " +
+                        "${result.skippedTestCount} skipped)"
+                printResults(suiteSummary)
+
+                // add results to combined total
+                totalTests += result.testCount
+                totalSuccesses += result.successfulTestCount
+                totalFailures += result.failedTestCount
+                totalSkipped += result.skippedTestCount
+            }
+        }
+    }
+}
+
+// used for test statistics
+ext {
+    totalTests = 0L
+    totalSuccesses = 0L
+    totalFailures = 0L
+    totalSkipped = 0L
+}
+
+gradle.buildFinished {
+    def combinedSummary = "Total Results: " +
+            "${totalTests} tests, " +
+            "${totalSuccesses} passed, " +
+            "${totalFailures} failed, " +
+            "${totalSkipped} skipped"
+    printResults(combinedSummary)
+}
+
+private static void printResults(result) {
+    def startItem = '│ ', endItem = ' │'
+    def repeatLength = startItem.length() + result.length() + endItem.length() - 2
+    println('\n' + '┌' + ('-' * repeatLength) + '┐' +
+            '\n' + startItem + result + endItem +
+            '\n' + '└' + ('-' * repeatLength) + '┘')
+}
+
+task stage(type: Copy) {
+    description "Build PXF server and stage resulting artifacts for packaging."
+    dependsOn ":pxf-service:bootJar"
+
+    // Provide the pxf-hbase jar. The pxf-hbase.jar is required for the PXF
+    // HBase connector to support filter push down
+    from("pxf-hbase/build/libs") { into 'share' }
+    from("pxf-service/build/libs") {
+        into 'application'
+        rename 'pxf-service-(.+)', 'pxf-app-$1'
+    }
+    from('pxf-service/src/scripts/') {
+        include 'pxf'
+        include 'kill-pxf.sh'
+        include 'merge-pxf-config.sh'
+        include 'pxf-pre-gpupgrade'
+        include 'pxf-post-gpupgrade'
+        into 'bin'
+        filter { line -> line.replaceAll('_PXF_VERSION_', "${version}") }
+    }
+    from('pxf-service/src/templates')
+    into "$buildDir/stage"
+
+    doLast { new File("${buildDir}/stage/version").text = "${version}\n" }
+}

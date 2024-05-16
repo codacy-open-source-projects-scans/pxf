@@ -1,0 +1,17 @@
+platform: linux
+
+image_resource:
+  type: registry-image
+
+inputs:
+  - name: pxf_src
+  - name: pxf_artifacts
+
+outputs:
+  - name: pxf_artifacts
+
+params:
+  GP_VER:
+
+run:
+  path: pxf_src/concourse/scripts/add_osl_deb.bash

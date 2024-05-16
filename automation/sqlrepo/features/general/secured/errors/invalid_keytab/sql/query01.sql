@@ -1,0 +1,26 @@
+-- @description query01 for PXF Profiles feature checking Profile not exists error.
+
+-- start_matchsubs
+--                                                                                               
+-- # create a match/subs
+--
+-- m/\/gpdb\/v\d+\//
+-- s/v\d+/SOME_VERSION/
+--
+-- m/file:.*;/
+-- s/file:.*; lineNumber: \d+; columnNumber: \d+;/SOME_ERROR_LOCATION/g
+--
+-- m/PXF service login failed for server secure-hdfs-invalid-keytab.*/
+-- s/PXF service login failed for server secure-hdfs-invalid-keytab.*/PXF service login failed for server secure-hdfs-invalid-keytab/
+--
+-- m/DETAIL/
+-- s/DETAIL/CONTEXT/
+--
+-- m/pxf:\/\/(.*)\/pxf_automation_data\/[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}/
+-- s/pxf:\/\/.*\/pxf_automation_data\/[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}/pxf:\/\/pxf_automation_data/
+--
+-- m/CONTEXT:.*line.*/
+-- s/line \d* of //g
+--
+-- end_matchsubs
+SELECT * FROM pxf_secured_invalid_keytab ORDER BY name;
