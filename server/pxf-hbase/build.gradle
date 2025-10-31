@@ -1,0 +1,50 @@
+apply plugin: "java-library"
+
+jar {
+    enabled = true
+}
+
+dependencies {
+    /*******************************
+     * API Dependencies
+     *******************************/
+
+    /*******************************
+     * Compile Only Dependencies
+     *******************************/
+
+    compileOnly("com.google.code.findbugs:annotations")
+    compileOnly("org.apache.hbase:hbase-annotations")
+
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
+    implementation(project(':pxf-api'))
+    implementation("com.google.protobuf:protobuf-java")
+    implementation("commons-collections:commons-collections")
+    implementation("org.apache.hbase:hbase-client")                  { transitive = false }
+    implementation("org.apache.hbase:hbase-common")                  { transitive = false }
+    implementation("org.apache.hbase:hbase-protocol")                { transitive = false }
+    implementation("org.apache.htrace:htrace-core")                  { transitive = false }
+    implementation("org.apache.zookeeper:zookeeper")                 { transitive = false }
+    implementation("io.netty:netty-common")                          { transitive = false }
+    implementation("io.netty:netty-transport")                       { transitive = false }
+    implementation("com.yammer.metrics:metrics-core")                { transitive = false }
+
+    implementation("org.springframework.boot:spring-boot-starter-log4j2")
+
+    /*******************************
+     * Test Dependencies
+     *******************************/
+
+    testCompileOnly("com.google.code.findbugs:annotations")
+    testCompileOnly("org.apache.hbase:hbase-annotations")
+    testImplementation("com.esotericsoftware:minlog")
+    testImplementation("com.esotericsoftware:reflectasm")
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+}
+
+test {
+    useJUnitPlatform()
+}

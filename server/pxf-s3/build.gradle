@@ -1,0 +1,41 @@
+apply plugin: "java-library"
+
+jar {
+    enabled = true
+}
+
+dependencies {
+    /*******************************
+     * API Dependencies
+     *******************************/
+
+    api(project(':pxf-api'))
+
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
+    implementation(project(':pxf-jdbc'))
+    implementation("com.google.guava:guava")
+    implementation("commons-codec:commons-codec")
+    implementation("commons-lang:commons-lang")
+    implementation("org.apache.commons:commons-lang3")
+    implementation("org.apache.httpcomponents:httpclient")           { transitive = false }
+    implementation("org.apache.httpcomponents:httpcore")             { transitive = false }
+    implementation("org.apache.hadoop:hadoop-aws")                   { transitive = false }
+    implementation("com.amazonaws:aws-java-sdk-core")                { transitive = false }
+    implementation("com.amazonaws:aws-java-sdk-kms")                 { transitive = false }
+    implementation("com.amazonaws:aws-java-sdk-s3")                  { transitive = false }
+    implementation("joda-time:joda-time")                            { transitive = false }
+    implementation("org.slf4j:slf4j-api")
+
+    /*******************************
+     * Test Dependencies
+     *******************************/
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+}
+
+test {
+    useJUnitPlatform()
+}

@@ -1,0 +1,95 @@
+apply plugin: "org.springframework.boot"
+
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
+dependencies {
+    /*******************************
+     * API Dependencies
+     *******************************/
+
+    /*******************************
+     * Compile Only Dependencies
+     *******************************/
+
+    compileOnly("org.apache.hadoop:hadoop-annotations")              { transitive = false }
+
+    /*******************************
+     * Implementation Dependencies
+     *******************************/
+
+    implementation(project(':pxf-api'))
+    implementation(project(':pxf-hbase'))
+    implementation(project(':pxf-hdfs'))
+    implementation(project(':pxf-hive'))
+    implementation(project(':pxf-jdbc'))
+    implementation(project(':pxf-json'))
+    implementation(project(':pxf-s3'))
+    implementation(project(':pxf-diagnostic'))
+
+    implementation("com.google.guava:guava")
+    implementation("commons-codec:commons-codec")
+    implementation("commons-collections:commons-collections")
+    implementation("commons-lang:commons-lang")
+    implementation("org.springframework.boot:spring-boot-starter-log4j2")
+    implementation("org.apache.logging.log4j:log4j-spring-boot")
+    implementation('org.springframework.boot:spring-boot-starter-actuator')
+    implementation('io.micrometer:micrometer-registry-prometheus')
+    implementation("com.univocity:univocity-parsers")
+
+    implementation("org.apache.hadoop:hadoop-hdfs-client")           { transitive = false }
+    implementation("org.apache.hadoop:hadoop-auth")                  { transitive = false }
+
+
+    /*******************************
+     * These JARs below (and its transitive dependencies, other than txw2 [for writing XML docs]) are needed for Java 11
+     * jcenter doesn't have full com.sun.xml.bind:jaxb-core/jaxb-impl packages, using glassfish distro
+     *******************************/
+
+    implementation("org.glassfish.jaxb:jaxb-runtime")   {
+        exclude module: 'txw2'
+    }
+
+    /*******************************
+     * Test Dependencies
+     *******************************/
+
+    testCompileOnly("org.apache.hadoop:hadoop-annotations")
+    testImplementation("com.esotericsoftware:kryo")
+    testImplementation("commons-io:commons-io")
+    testImplementation("org.simplify4u:slf4j-mock") // for MDC mocking
+
+    developmentOnly('org.springframework.boot:spring-boot-devtools')
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+    testImplementation('org.springframework.boot:spring-boot-starter-webflux')
+}
+
+bootJar {
+    layered {
+        enabled = false
+    }
+    manifest {
+        attributes("Implementation-Title": project.name)
+        attributes("Implementation-Version": project.version)
+        attributes('Main-Class': 'org.springframework.boot.loader.PropertiesLauncher')
+    }
+}
+
+springBoot {
+    mainClass = "org.greenplum.pxf.service.PxfServiceApplication"
+    buildInfo {
+        properties {
+            additional = [
+                    "pxfApiVersion" : "${apiVersion}"
+            ]
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
